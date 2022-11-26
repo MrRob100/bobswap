@@ -3,17 +3,21 @@
 // Or get amounts in / out with 1 of the tokenA
 
 import './App.css';
+import 'react-toastify/dist/ReactToastify.css';
 import React, { Component } from "react";
 // import sass from './sass/app.scss';
 import axios from "axios";
+import { ToastContainer, toast } from "react-toastify";
 
 class App extends Component {
 
     state = {
         loading: false,
+        hasPool: false,
+        filled: false,
         pairAddresses: [],
-        token0: null,
-        token1: null,
+        token0: {address: null, symbol: null},
+        token1: {address: null, symbol: null},
         pairs: [
             {
                 token0: {
@@ -39,47 +43,11 @@ class App extends Component {
     }
 
     render() {
-
-        const getPairs = async () => {
-            this.setState({loading: true});
-
-            try {
-                const result = await axios.post(
-                    'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2',
-                    {
-                        query: `
-                            {
-                                pairs(first: 5, orderBy: txCount, orderDirection: desc) {
-                                    token0 {
-                                        name,
-                                        symbol,
-                                        tradeVolumeUSD,
-                                        totalLiquidity
-                                    }
-                                    token1 {
-                                        name,
-                                        symbol,
-                                        tradeVolumeUSD,
-                                        totalLiquidity       
-                                    },
-                                    token0Price,
-                                    token1Price,
-                                    txCount,
-                                    createdAtTimestamp,
-                                }
-                            }
-                        `
-                    }
-                )
-
-                console.log(result);
-            } catch(e) {
-                console.error(e);
-            }
-        }
-
         const allTokens = async () => {
-            this.setState({loading: true});
+            this.setState({
+                loading: true,
+                filled: false,
+            });
 
             try {
                 const result = await axios.post(
@@ -100,71 +68,6 @@ class App extends Component {
                 console.log(result);
             } catch(e) {
                 console.error(e);
-            }
-        }
-
-        const poolData = async () => {
-            this.setState({loading: true});
-
-            try {
-                const result = await axios.post(
-                    'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3',
-                    {
-                        query: `
-                        {
-                            factories(first: 5) {
-                                id
-                                poolCount
-                                txCount
-                                totalVolumeUSD
-                        }
-                            bundles(first: 5) {
-                                id
-                                ethPriceUSD
-                        }
-                        }
-                    `
-                    }
-                )
-
-                console.log(result);
-                this.setState({
-                    loading: false,
-                    // pairs: result.data.data.pairs,
-                });
-
-            } catch(e) {
-                console.error(e);
-                this.setState({loading: false});
-            }
-        }
-
-        const main = async () => {
-            this.setState({loading: true});
-
-            try {
-                const result = await axios.post(
-                    'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2',
-                    {
-                        query: `
-                        {
-                            pairs {
-                                id
-                            }
-                        }
-                    `
-                    }
-                )
-
-                console.log(result);
-                this.setState({
-                    loading: false,
-                    pairAddresses: result.data.data.pairs,
-                });
-
-            } catch(e) {
-                console.error(e);
-                this.setState({loading: false});
             }
         }
 
@@ -242,46 +145,13 @@ class App extends Component {
             }
         }
 
-        const getPools = async () => {
-            this.setState({loading: true});
-
-            try {
-                const result = await axios.post(
-                    'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3',
-                    {
-                        query: `
-                        {
-                            pools(orderBy: volumeUSD, orderDirection: desc, first: 10) {
-                                id,
-                                token0 {
-                                    id,
-                                    symbol
-                                }
-                                token1 {
-                                    id,
-                                    symbol
-                                }
-                                poolHourData
-                            }
-                        }
-                    `
-                    }
-                )
-
-                console.log(result);
-                this.setState({
-                    loading: false,
-                    // pairs: result.data.data.pairs,
-                });
-
-            } catch(e) {
-                console.error(e);
-                this.setState({loading: false});
-            }
-        }
-
         const fill = async (token0, token1) => {
-            this.setState({loading: true});
+            this.setState({
+                loading: true,
+                token0,
+                token1,
+                filled: false,
+            });
 
             try {
                 const result = await axios.post(
@@ -307,12 +177,52 @@ class App extends Component {
                 )
 
                 console.log(result);
+                if (result.data.errors) {
+                    console.error(result.data.errors);
+
+                    result.data.errors.map(error => {
+                        toast.error(error.message, {
+                            position: "top-right",
+                            hideProgressBar: false,
+                            closeOnClick: true,
+                            pauseOnHover: true,
+                            draggable: true,
+                            progress: undefined,
+                            theme: "light",
+                        });
+                    });
+                    this.setState({
+                        filled: false
+                    })
+                } else {
+                    if (result.data.data.pools.length === 0) {
+                        toast.info(`Pool not found, using WETH to connect ${token0.symbol} and ${token1.symbol}`, {
+                            position: "top-right",
+                            hideProgressBar: false,
+                            closeOnClick: true,
+                            pauseOnHover: true,
+                            draggable: true,
+                            progress: undefined,
+                            theme: "light",
+                        });
+                        this.setState({
+                            hasPool: false
+                        })
+                    } else {
+                        this.setState({
+                            hasPool: true
+                        })
+                    }
+                }
+
                 this.setState({
                     loading: false,
-                    // pairs: result.data.data.pairs,
+                    filled: true,
                 });
 
             } catch(e) {
+
+                //toastie too
                 console.error(e);
                 this.setState({loading: false});
             }
@@ -320,33 +230,24 @@ class App extends Component {
 
         return (
             <div className="App">
+                <ToastContainer
+                    position="top-right"
+                    hideProgressBar={false}
+                    newestOnTop={false}
+                    closeOnClick
+                    rtl={false}
+                    pauseOnFocusLoss
+                    draggable
+                    pauseOnHover
+                    theme="light"
+                />
+                {/* Same as */}
+                <ToastContainer />
                 <br></br>
                 {this.state.loading && <code>loading</code>}
                 <br></br>
-                <button onClick={main}><code>uniswap graphql</code></button>
-                <br></br>
-                <br></br>
-                <button onClick={poolData}><code>pool data</code></button>
-                <br></br>
-                <br></br>
-                <button onClick={getPools}><code>get pools</code></button>
-                <br></br>
-                <br></br>
-                <button onClick={getPairs}><code>get pairs</code></button>
-                <br></br>
-                <br></br>
-                <button onClick={getTokenDayData}><code>get token day data</code></button>
-                <br></br>
-                <br></br>
-                <button onClick={getPoolDayData}><code>get pool day data</code></button>
-                <br></br>
-                <br></br>
-                <button onClick={allTokens}><code>all tokens</code></button>
-                {this.state.pairAddresses.map((item) => {
-                    return <p key={item.id}>{item.id}</p>
-                })}
-                <br></br>
-                <hr></hr>
+                <code><h1>{this.state.token0.symbol}-{this.state.token1.symbol}</h1></code>
+                {this.state.filled && <code>{!this.state.hasPool && <h4>{this.state.token0.symbol}-WETH-{this.state.token1.symbol}</h4>}</code>}
                 {this.state.pairs.map((item) => {
                     let pair = `${item.token0.symbol}-${item.token1.symbol}`;
                     return (
