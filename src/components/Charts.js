@@ -16,10 +16,10 @@ class Charts extends Component {
                 <div>
                     <Line
                         data={{
-                            labels: ["Jan", "Feb", "March"],
+                            labels: this.props.dates,
                             datasets: [
                                 {
-                                    label: "First Dataset",
+                                    label: this.props.token0,
                                     data: this.props.token0prices,
                                     backgroundColor: "yellow",
                                     borderColor: color,
@@ -36,10 +36,10 @@ class Charts extends Component {
                 <div>
                     <Line
                         data={{
-                            labels: ["Jan", "Feb", "March"],
+                            labels: this.props.dates,
                             datasets: [
                                 {
-                                    label: "First Dataset",
+                                    label: this.props.token0 + " " + this.props.token1,
                                     data: this.props.token01prices,
                                     backgroundColor: "yellow",
                                     borderColor: color,
@@ -56,17 +56,17 @@ class Charts extends Component {
                 <div>
                     <Line
                         data={{
-                            labels: ["Jan", "Feb", "March"],
+                            labels: this.props.dates,
                             datasets: [
                                 {
-                                    label: "First Dataset",
+                                    label: this.props.token1,
                                     data: this.props.token1prices,
                                     backgroundColor: "yellow",
                                     borderColor: color,
                                     tension: 0.4,
                                     fill: true,
                                     pointStyle: 'star',
-                                    pointBorderColor: 'blue'
+                                    pointBorderColor: 'blue',
                                 }
                             ]
                         }}

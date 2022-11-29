@@ -47,7 +47,7 @@ const List = (props) => {
 
                             return(
                                 <li onClick={() => setToken1(data)} key={index} className={`hover:${active ? active : 'bg-slate-200'} cursor-pointer ${active}`}>
-                                    <span>{item.token1.symbol}</span>
+                                    <code>{item.token1.symbol}</code>
                                 </li>
                             )
                         })}

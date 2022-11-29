@@ -21,12 +21,13 @@ class App extends Component {
         hasPool: false,
         filled: false,
         pairAddresses: [],
-        token0: {address: null, symbol: null},
-        token1: {address: null, symbol: null},
+        token0: {address: "", symbol: ""},
+        token1: {address: "", symbol: ""},
         pools: [],
         chart0Data: [],
         chart01Data: [],
         chart1Data: [],
+        dates: [],
     }
 
     render() {
@@ -80,37 +81,6 @@ class App extends Component {
             }
         }
 
-        // getPools();
-
-        //pass this function to props of list
-
-        const allTokens = async () => {
-            this.setState({
-                loading: true,
-                filled: false,
-            });
-
-            try {
-                const result = await axios.post(
-                    'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v2',
-                    {
-                        query: `
-                            {
-                                tokens {
-                                    symbol
-                                    name
-                                    decimals  
-                                }
-                            }
-                        `
-                    }
-                )
-
-            } catch(e) {
-                console.error(e);
-            }
-        }
-
         const getPoolDayData = async (poolId) => {
             try {
                 const result = await axios.post(
@@ -118,7 +88,7 @@ class App extends Component {
                     {
                         query: `
                         {
-                             poolDayDatas(first: 3, orderBy: date, orderDirection: desc, where: { pool: "${poolId}" }) 
+                             poolDayDatas(first: 4, orderBy: date, orderDirection: desc, where: { pool: "${poolId}" }) 
                              { 
                                  id 
                                  date 
@@ -234,9 +204,12 @@ class App extends Component {
             const token0PoolData = await getPoolDayData(token0Pool);
             const token1PoolData = await getPoolDayData(token1Pool);
 
+            let dates = [];
             let priceDataToken0 = [];
             token0PoolData.map((item) => {
                 priceDataToken0.push(parseFloat(item.token0Price));
+                let date = new Date(item.date * 1000);
+                dates.push(date.toLocaleDateString("en-GB"));
             });
 
             let priceDataToken01 = []
@@ -247,15 +220,18 @@ class App extends Component {
                 priceDataToken01.push(priceDataToken0[index] / token0Price);
             });
 
+            dates.reverse();
+
             this.setState({
-                chart0Data: priceDataToken0,
-                chart01Data: priceDataToken01,
-                chart1Data: priceDataToken1,
+                chart0Data: priceDataToken0.reverse(),
+                chart01Data: priceDataToken01.reverse(),
+                chart1Data: priceDataToken1.reverse(),
+                dates,
             });
         }
 
         return (
-            <div className="App">
+            <div className="App mt-20">
                 <ToastContainer
                     position="top-right"
                     hideProgressBar={false}
@@ -267,7 +243,10 @@ class App extends Component {
                     pauseOnHover
                     theme="light"
                 /><ToastContainer />
-                <div className="grid grid-cols-3 gap-4">
+                {this.state.loading && <code className="absolute">loading</code>}
+                <code><h1 className="text-xxl bold">{this.state.token0.symbol} {this.state.token1.symbol}</h1></code>
+                {this.state.filled && <code>{!this.state.hasPool && <h4>{this.state.token0.symbol}-USDC-{this.state.token1.symbol}</h4>}</code>}
+                <div className="grid grid-cols-5 gap-4">
                     <div>
                         <List
                             allPools={getPools}
@@ -276,21 +255,18 @@ class App extends Component {
                             setChartData={setChartData}>
                         </List>
                     </div>
-                    <div className="col-span-2">
+                    <div className="col-span-4">
                         <Charts
                             token0prices={this.state.chart0Data}
                             token01prices={this.state.chart01Data}
                             token1prices={this.state.chart1Data}
+                            dates={this.state.dates}
+                            token0={this.state.token0.symbol}
+                            token1={this.state.token1.symbol}
                         >
                         </Charts>
                     </div>
                 </div>
-
-                <br></br>
-                {this.state.loading && <code>loading</code>}
-                <br></br>
-                <code><h1>{this.state.token0.symbol}-{this.state.token1.symbol}</h1></code>
-                {this.state.filled && <code>{!this.state.hasPool && <h4>{this.state.token0.symbol}-USDC-{this.state.token1.symbol}</h4>}</code>}
             </div>
         );
     }
