@@ -6,7 +6,24 @@ ChartJS.register(
     CategoryScale, LinearScale, PointElement, Filler
 )
 
-const color = "red";
+const borderColor = "#777";
+const backgroundColor = "rgba(255,243,92,0.78)";
+const pointColor = "#777";
+const defaults = {
+    backgroundColor: backgroundColor,
+    borderColor: borderColor,
+    tension: 0.4,
+    fill: true,
+    pointBorderColor: pointColor,
+}
+
+const options = {
+    plugins: {
+        legend: {
+            display: false,
+        },
+    }
+}
 
 class Charts extends Component {
 
@@ -14,6 +31,7 @@ class Charts extends Component {
         return (
             <div className="grid grid-cols-3 gap-4">
                 <div>
+                    <code>{this.props.token0 ? this.props.token0 : "-"}</code>
                     <Line
                         data={{
                             labels: this.props.dates,
@@ -21,19 +39,16 @@ class Charts extends Component {
                                 {
                                     label: this.props.token0,
                                     data: this.props.token0prices,
-                                    backgroundColor: "yellow",
-                                    borderColor: color,
-                                    tension: 0.4,
-                                    fill: true,
-                                    pointStyle: 'star',
-                                    pointBorderColor: 'blue'
+                                    ...defaults,
                                 }
                             ]
                         }}
+                        options={options}
                     >
                     </Line>
                 </div>
                 <div>
+                    <code>{this.props.token0 && this.props.token1 ? this.props.token0 + "-" + this.props.token1 : "-"}</code>
                     <Line
                         data={{
                             labels: this.props.dates,
@@ -41,19 +56,16 @@ class Charts extends Component {
                                 {
                                     label: this.props.token0 + " " + this.props.token1,
                                     data: this.props.token01prices,
-                                    backgroundColor: "yellow",
-                                    borderColor: color,
-                                    tension: 0.4,
-                                    fill: true,
-                                    pointStyle: 'star',
-                                    pointBorderColor: 'blue'
+                                    ...defaults,
                                 }
                             ]
                         }}
+                        options={options}
                     >
                     </Line>
                 </div>
                 <div>
+                    <code>{this.props.token1 ? this.props.token1 : "-"}</code>
                     <Line
                         data={{
                             labels: this.props.dates,
@@ -61,15 +73,12 @@ class Charts extends Component {
                                 {
                                     label: this.props.token1,
                                     data: this.props.token1prices,
-                                    backgroundColor: "yellow",
-                                    borderColor: color,
-                                    tension: 0.4,
-                                    fill: true,
-                                    pointStyle: 'star',
-                                    pointBorderColor: 'blue',
+                                    backgroundColor: backgroundColor,
+                                    ...defaults,
                                 }
                             ]
                         }}
+                        options={options}
                     >
                     </Line>
                 </div>

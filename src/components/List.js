@@ -32,8 +32,8 @@ const List = (props) => {
                             let data = {id: item.token1.id, symbol: item.token1.symbol, poolId: item.id}
 
                             return(
-                                <li onClick={() => setToken0(data)} key={index} className={`hover:${active ? active : 'bg-slate-200'} cursor-pointer ${active}`}>
-                                    <span>{item.token1.symbol}</span>
+                                <li onClick={() => setToken0(data)} key={index} className={`hover:${active ? active :'bg-slate-200'} cursor-pointer ${active}`}>
+                                    <code className="text-gray-800">{item.token1.symbol}</code>
                                 </li>
                             )
                         })}
@@ -47,7 +47,7 @@ const List = (props) => {
 
                             return(
                                 <li onClick={() => setToken1(data)} key={index} className={`hover:${active ? active : 'bg-slate-200'} cursor-pointer ${active}`}>
-                                    <code>{item.token1.symbol}</code>
+                                    <code className="text-gray-800">{item.token1.symbol}</code>
                                 </li>
                             )
                         })}
