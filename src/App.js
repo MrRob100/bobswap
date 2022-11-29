@@ -4,13 +4,13 @@
 
 import './App.css';
 import 'react-toastify/dist/ReactToastify.css';
-import React, {Component, useEffect} from "react";
-import Chart from 'chart.js';
+import React, {Component, useState} from "react";
 
 // import sass from './sass/app.scss';
 import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
-import List from "./components/list";
+import List from "./components/List";
+import Charts from "./components/Charts";
 
 const USDCAddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
 
@@ -23,39 +23,10 @@ class App extends Component {
         pairAddresses: [],
         token0: {address: null, symbol: null},
         token1: {address: null, symbol: null},
-        pairs: [
-            {
-                token0: {
-                    address: "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
-                    symbol: "USDC"
-                },
-                token1: {
-                    address: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-                    symbol: "WETH"
-                }
-            },
-            {
-                token0: {
-                    address: "0x95aD61b0a150d79219dCF64E1E6Cc01f0B64C4cE",
-                    symbol: "SHIB"
-                },
-                token1: {
-                    address: "0x514910771AF9Ca656af840dff83E8264EcF986CA",
-                    symbol: "LINK"
-                }
-            },
-            {
-                token0: {
-                    address: "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2",
-                    symbol: "WETH"
-                },
-                token1: {
-                    address: "0x514910771AF9Ca656af840dff83E8264EcF986CA",
-                    symbol: "LINK"
-            }
-        }
-        ],
         pools: [],
+        chart0Data: [],
+        chart01Data: [],
+        chart1Data: [],
     }
 
     render() {
@@ -90,8 +61,6 @@ class App extends Component {
                     loading: false,
                     // pairs: result.data.data.pairs,
                 });
-
-                console.log(result);
 
                 //set state here then pass to child as props
                 if(result.data.data.pools && result.data.data.pools.length > 0) {
@@ -137,15 +106,12 @@ class App extends Component {
                     }
                 )
 
-                console.log(result);
             } catch(e) {
                 console.error(e);
             }
         }
 
         const getPoolDayData = async (poolId) => {
-            this.setState({loading: true});
-
             try {
                 const result = await axios.post(
                     'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3',
@@ -172,37 +138,17 @@ class App extends Component {
                 )
 
                 if (result.data.data.poolDayDatas) {
-
                     return result.data.data.poolDayDatas;
-
-                    // this.setState({
-                    //     pairPrices: result.data.data.poolDayDatas
-                    // });
-
-                    //
-
-                    //need to set token0price and token1price individ, even if it means looping through
-                    //THEN WE CAN REUSE THIS FUNCTION
-
-
                 } else {
-                    //toasty eror
                     return [];
                 }
-
-                console.log(result);
-                this.setState({
-                    loading: false,
-                });
-
             } catch(e) {
                 console.error(e);
-                this.setState({loading: false});
                 return [];
             }
         }
 
-        const fill = async (token0, token1) => {
+        const checkIfPool = async (token0, token1) => {
             this.setState({
                 loading: true,
                 token0,
@@ -216,7 +162,7 @@ class App extends Component {
                     {
                         query: `
                         {
-                            pools(where: { token0: "${token0.address}", token1: "${token1.address}"}, first: 1) {
+                            pools(where: { token0: "${token0.id}", token1: "${token1.id}"}, first: 1) {
                                 id,
                                 token0 {
                                     id,
@@ -233,7 +179,6 @@ class App extends Component {
                     }
                 )
 
-                console.log(result);
                 if (result.data.errors) {
                     console.error(result.data.errors);
 
@@ -265,26 +210,10 @@ class App extends Component {
                         this.setState({
                             hasPool: false
                         })
-
-                        console.log(token0, token1);
-
-                        //construct
-                        // getPoolDayData()
-                        //we have the token ids,
-
-                        //getPools to find pool id of token0 and USDC
-                        //getPools to find pool id of token1 and USDC
-                        
-                        // getPoolDayData(pool0Id);
-                        // getPoolDayData(pool1Id);
-
                     } else {
                         this.setState({
                             hasPool: true,
                         })
-
-                        const poolData = await getPoolDayData(result.data.data.pools[0].id);
-                        console.log('poolData', poolData);
                     }
                 }
 
@@ -301,59 +230,28 @@ class App extends Component {
             }
         }
 
-        const getTokenData = async (tokenAddress) => {
-            this.setState({loading: true});
+        const setChartData = async(token0Pool, token1Pool) => {
+            const token0PoolData = await getPoolDayData(token0Pool);
+            const token1PoolData = await getPoolDayData(token1Pool);
 
-            // pools(where: { OR: [
-            //     { AND: [{token0: { eq: "${tokenAddress}" }}, {token1: { eq: "${USDCAddress}" }} ]},
-            //     { AND: [{token0: { eq: "${USDCAddress}" }}, {token1: { eq: "${tokenAddress}" }} ]},
-            // ]})
+            let priceDataToken0 = [];
+            token0PoolData.map((item) => {
+                priceDataToken0.push(parseFloat(item.token0Price));
+            });
 
-            // pools(where: { token0: "${tokenAddress}", token1: "${USDCAddress}"}, first: 1) {
+            let priceDataToken01 = []
+            let priceDataToken1 = [];
+            token1PoolData.map((item, index) => {
+                let token0Price = parseFloat(item.token0Price);
+                priceDataToken1.push(token0Price);
+                priceDataToken01.push(priceDataToken0[index] / token0Price);
+            });
 
-                console.log(tokenAddress);
-
-                try {
-                    const result = await axios.post(
-                        'https://api.thegraph.com/subgraphs/name/uniswap/uniswap-v3',
-                        {
-                            query: `
-                        {
-                            pools(where: { token1: "0xB0B195aEFA3650A6908f15CdaC7D92F8a5791B0B"}) {
-                                id,
-                                token0 {
-                                    id,
-                                    symbol
-                                }
-                                token1 {
-                                    id,
-                                    symbol
-                                }
-                                poolHourData
-                            }
-                        }
-                    `
-                        }
-                    )
-
-                this.setState({
-                    loading: false,
-                    // pairs: result.data.data.pairs,
-                });
-
-                // return result.data.data[0]
-                return result;
-
-            } catch(e) {
-                console.error(e);
-                this.setState({loading: false});
-                return null;
-            }
-        }
-
-        const getLinkPool = async() => {
-            let pool = await getTokenData("0x514910771AF9Ca656af840dff83E8264EcF986CA");
-            console.log(pool);
+            this.setState({
+                chart0Data: priceDataToken0,
+                chart01Data: priceDataToken01,
+                chart1Data: priceDataToken1,
+            });
         }
 
         return (
@@ -371,10 +269,21 @@ class App extends Component {
                 /><ToastContainer />
                 <div className="grid grid-cols-3 gap-4">
                     <div>
-                        <List allPools={getPools} pools={this.state.pools}></List>
+                        <List
+                            allPools={getPools}
+                            checkIfPool={checkIfPool}
+                            pools={this.state.pools}
+                            setChartData={setChartData}>
+                        </List>
                     </div>
-                    <div></div>
-                    <div></div>
+                    <div className="col-span-2">
+                        <Charts
+                            token0prices={this.state.chart0Data}
+                            token01prices={this.state.chart01Data}
+                            token1prices={this.state.chart1Data}
+                        >
+                        </Charts>
+                    </div>
                 </div>
 
                 <br></br>
@@ -382,17 +291,6 @@ class App extends Component {
                 <br></br>
                 <code><h1>{this.state.token0.symbol}-{this.state.token1.symbol}</h1></code>
                 {this.state.filled && <code>{!this.state.hasPool && <h4>{this.state.token0.symbol}-USDC-{this.state.token1.symbol}</h4>}</code>}
-                {this.state.pairs.map((item) => {
-                    let pair = `${item.token0.symbol}-${item.token1.symbol}`;
-                    return (
-                    <div key={pair}>
-                        <br></br>
-                        <button onClick={() => fill(item.token0, item.token1)}>{pair}</button>
-                    </div>
-                )
-                })}
-                <button onClick={getLinkPool}><code>Get Link Token Data</code></button>
-                <canvas id="chartToken0"></canvas>
             </div>
         );
     }
