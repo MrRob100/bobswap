@@ -25,6 +25,7 @@ class App extends Component {
         chart01Data: [],
         chart1Data: [],
         dates: [],
+        ethBalance: null,
         filled: false,
         hasPool: false,
         loading: false,
@@ -248,6 +249,7 @@ class App extends Component {
                     });
 
                     const provider = this.state.provider ? this.state.provider : new providers.Web3Provider(window.ethereum);
+
                     this.setState({walletProvider: provider.connection.url});
                     const balance = await provider.getBalance(accounts[0]);
 
@@ -345,6 +347,7 @@ class App extends Component {
                             this.state.networkName &&
                             <span className="bg-blue-100 text-blue-800 text-sm font-medium mr-2 px-2.5 py-0.5 rounded dark:bg-blue-200 dark:text-blue-800"><code>{this.state.networkName}</code></span>
                         }
+                        <code>ETH balance: {this.state.ethBalance}</code>
                     </div>
                     <div>
                         {this.state.walletAddress ?
