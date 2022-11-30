@@ -10,7 +10,7 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import List from "./components/List";
 import Charts from "./components/Charts";
-import {providers, utils} from "ethers";
+import {Contract, providers, utils} from "ethers";
 
 const USDCAddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
 const NETWORKS = {
@@ -29,8 +29,8 @@ class App extends Component {
         hasPool: false,
         loading: false,
         networkName: null,
-        pairAddresses: [],
         pools: [],
+        provider: null,
         token0: {address: "", symbol: ""},
         token1: {address: "", symbol: ""},
         walletAddress: null,
@@ -247,16 +247,16 @@ class App extends Component {
                         method: "eth_requestAccounts",
                     });
 
-                    const provider = new providers.Web3Provider(window.ethereum);
-
+                    const provider = this.state.provider ? this.state.provider : new providers.Web3Provider(window.ethereum);
                     this.setState({walletProvider: provider.connection.url});
-                    const balances = await provider.getBalance(accounts[0]);
+                    const balance = await provider.getBalance(accounts[0]);
 
                     this.setState({
+                        provider,
                         walletAddress: accounts[0],
                         walletProvider: provider.connection.url,
-                        ethBalance: utils.formatEther(balances),
-                        networkName: NETWORKS[provider._network.chainId]
+                        ethBalance: utils.formatEther(balance),
+                        networkName: NETWORKS[provider._network.chainId],
                     });
 
                 } catch (error) {
@@ -276,28 +276,37 @@ class App extends Component {
             }
         }
 
-        const getBalance = async() => {
+        const getBalance = async(tokenAddress) => {
             if (window.ethereum) {
 
-                //find wallet address
+                const provider = this.state.provider ? this.state.provider : new providers.Web3Provider(window.ethereum);
 
-                // const provider = new providers.Web3Provider(window.ethereum);
+                // const ethers = require('ethers');
+                const genericErc20Abi = require("./Erc20ABI.json");
 
 
-                // console.log(provider);
-                // console.log(utils.formatEther(balances));
+                // const tokenContractAddress = tokenAddress;
+                const tokenContractAddress = "0x514910771AF9Ca656af840dff83E8264EcF986CA";
+
+
+                // const tokenContractAddress = '0x...';
+                const contract = new Contract(tokenContractAddress, genericErc20Abi, provider);
+
+                // const signer = provider.getSigner(this.state.walletAddress);
+
+                // const balance = (await contract.balanceOf(signer).toString());
+
+                // DAIBalance = await DAI.balanceOf(owner.address)
+
+                // 0xa9E414f82a73c0B761D06fAc24EbA2fE99903be4 // chainlink address
+                let chainlinkAddress = "0xa9E414f82a73c0B761D06fAc24EbA2fE99903be4";
+
+                const balance = await contract.balanceOf(chainlinkAddress);
+
+                console.log(utils.formatEther(balance));
 
             }
         }
-
-        const checkWallet = async() => {
-            if(window.ethereum) {
-                const provider = new providers.Web3Provider(window.ethereum);
-                this.setState({walletProvider: provider.connection.url});
-            }
-        }
-
-        // checkWallet();
 
         return (
             <div className="App">
@@ -376,7 +385,12 @@ class App extends Component {
                             token1={this.state.token1.symbol}
                         >
                         </Charts>
-                        <button onClick={getBalance} className="bg-slate-500 hover:bg-slate-700 text-white text-sm font-bold py-2 px-4 rounded-full text-small mx-3">Get Balance</button>
+                        <button onClick={() => getBalance(this.state.token0.id)} className="bg-slate-500 hover:bg-slate-700 text-white text-sm font-bold py-2 px-4 rounded-full text-small mx-3">
+                            Get balance: {this.state.token0.symbol}
+                        </button>
+                        <button onClick={() => getBalance(this.state.token0.id)} className="bg-slate-500 hover:bg-slate-700 text-white text-sm font-bold py-2 px-4 rounded-full text-small mx-3">
+                            Get balance: {this.state.token1.symbol}
+                        </button>
                     </div>
                 </div>
             </div>
