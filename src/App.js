@@ -95,7 +95,7 @@ class App extends Component {
                     {
                         query: `
                         {
-                             poolDayDatas(first: 5, orderBy: date, orderDirection: desc, where: { pool: "${poolId}" }) 
+                             poolDayDatas(first: 100, orderBy: date, orderDirection: desc, where: { pool: "${poolId}" }) 
                              { 
                                  id 
                                  date 
@@ -208,31 +208,45 @@ class App extends Component {
         }
 
         const setChartData = async(token0Pool, token1Pool) => {
-            const token0PoolData = await getPoolDayData(token0Pool);
-            const token1PoolData = await getPoolDayData(token1Pool);
+            const token0PoolData = (await getPoolDayData(token0Pool)).reverse();
+            const token1PoolData = (await getPoolDayData(token1Pool)).reverse();
 
             let dates = [];
-            let priceDataToken0 = [];
-            token0PoolData.map((item) => {
-                priceDataToken0.push(parseFloat(item.token0Price));
+            let chart0Data = [];
+            let chart01Data = [];
+            let chart1Data = [];
+
+            let smallest = token0PoolData.length < token1PoolData ? token0PoolData : token1PoolData;
+            smallest.map((item, index) => {
+                let token0Price = token0PoolData[index].token0Price;
+                chart0Data.push(token0Price);
+
+                let token1Price = token1PoolData[index].token0Price; //YES THIS IS SUPPOSED TO BE .token0Price
+                chart1Data.push(token1Price);
+
+                chart01Data.push(token0Price / token1Price);
+
                 let date = new Date(item.date * 1000);
-                dates.push(date.toLocaleDateString("en-GB"));
-            });
+                dates.push(`${date.getUTCDate()}/${date.getUTCMonth() + 1}`);
+            })
 
-            let priceDataToken01 = []
-            let priceDataToken1 = [];
-            token1PoolData.map((item, index) => {
-                let token0Price = parseFloat(item.token0Price);
-                priceDataToken1.push(token0Price);
-                priceDataToken01.push(priceDataToken0[index] / token0Price);
-            });
-
-            dates.reverse();
+            let latestOfSmallest = new Date(smallest[smallest.length - 1].date * 1000);
+            if(`${latestOfSmallest.getUTCDate()}${latestOfSmallest.getUTCMonth()}` !== `${(new Date().getUTCDate())}${new Date().getUTCMonth()}`) {
+                // console.log(smallest); //maybe fetch pool
+                toast.error(`Price data only goes up to ${latestOfSmallest.toUTCString()}`, {
+                    position: "top-right",
+                    hideProgressBar: false,
+                    closeOnClick: true,
+                    pauseOnHover: true,
+                    draggable: true,
+                    progress: undefined,
+                    theme: "light",
+                });            }
 
             this.setState({
-                chart0Data: priceDataToken0.reverse(),
-                chart01Data: priceDataToken01.reverse(),
-                chart1Data: priceDataToken1.reverse(),
+                chart0Data,
+                chart01Data,
+                chart1Data,
                 dates,
             });
         }
