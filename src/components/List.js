@@ -4,6 +4,7 @@ const List = (props) => {
 
     const [token0, setToken0] = useState({id: "", symbol: "", poolId: ""});
     const [token1, setToken1] = useState({id: "", symbol: "", poolId: ""});
+    const [tokenList, setTokenList] = useState([]);
 
     useEffect(() => {
         const fetchData = async() => {
@@ -22,12 +23,31 @@ const List = (props) => {
 
     }, [token0, token1]);
 
+    useEffect(() => {
+        let data = [];
+        props.pools.map((item) => {
+            data.push()
+        });
+    }, [props.pools]);
+
+    useEffect(() => {
+        if(props.pools.length > 0) {
+            let tokenListData = [];
+            props.pools.map((item, index) => {
+                if(index > 0 && item.token1.symbol !== props.pools[index -1].token1.symbol) {
+                    tokenListData.push(item);
+                }
+            })
+            setTokenList(tokenListData);
+        }
+    }, [props.pools]);
+
     return (
         <div className="App">
             <div className="grid grid-cols-2 gap-4">
                 <div className="h-80 overflow-scroll bg-slate-100">
                     <ul>
-                        {props.pools.length > 0 && props.pools.map((item, index) => {
+                        {tokenList.length > 0 && tokenList.map((item, index) => {
                             let active = item.token1.id === token0.id ? 'bg-slate-300' : '';
                             let data = {id: item.token1.id, symbol: item.token1.symbol, poolId: item.id}
 
@@ -41,7 +61,7 @@ const List = (props) => {
                 </div>
                 <div className="h-80 overflow-scroll bg-slate-100">
                     <ul>
-                        {props.pools.length > 0 && props.pools.map((item, index) => {
+                        {tokenList.length > 0 && tokenList.map((item, index) => {
                             let active = item.token1.id === token1.id ? 'bg-slate-300' : '';
                             let data = {id: item.token1.id, symbol: item.token1.symbol, poolId: item.id}
 

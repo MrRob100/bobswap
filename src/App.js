@@ -11,6 +11,7 @@ import { ToastContainer, toast } from "react-toastify";
 import List from "./components/List";
 import Charts from "./components/Charts";
 import {Contract, providers, utils} from "ethers";
+import SwapInteractor from "./components/SwapInteractor";
 
 const USDCAddress = "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48";
 const NETWORKS = {
@@ -41,8 +42,6 @@ class App extends Component {
     render() {
         const getPools = async () => {
             this.setState({loading: true});
-
-            //where token1 is USDC
 
             try {
                 const result = await axios.post(
@@ -287,7 +286,7 @@ class App extends Component {
                 const genericErc20Abi = require("./Erc20ABI.json");
 
 
-                // const tokenContractAddress = tokenAddress;
+                // const tokenContractAddress = chainink token tokenAddress;
                 const tokenContractAddress = "0x514910771AF9Ca656af840dff83E8264EcF986CA";
 
 
@@ -300,7 +299,7 @@ class App extends Component {
 
                 // DAIBalance = await DAI.balanceOf(owner.address)
 
-                // 0xa9E414f82a73c0B761D06fAc24EbA2fE99903be4 // chainlink address
+                // 0xa9E414f82a73c0B761D06fAc24EbA2fE99903be4 // MY chainlink address in metamask
                 let chainlinkAddress = "0xa9E414f82a73c0B761D06fAc24EbA2fE99903be4";
 
                 const balance = await contract.balanceOf(chainlinkAddress);
@@ -394,6 +393,7 @@ class App extends Component {
                         <button onClick={() => getBalance(this.state.token0.id)} className="bg-slate-500 hover:bg-slate-700 text-white text-sm font-bold py-2 px-4 rounded-full text-small mx-3">
                             Get balance: {this.state.token1.symbol}
                         </button>
+                        <SwapInteractor />
                     </div>
                 </div>
             </div>
